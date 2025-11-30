@@ -203,6 +203,10 @@
 </head>
 <body>
 
+    <audio id="background-music" loop>
+        <source src="music/tua_canzone.mp3" type="audio/mp3"> 
+        Il tuo browser non supporta l'elemento audio.
+    </audio>
     <div id="canvas-container"></div>
 
     <div id="intro-overlay">
@@ -219,7 +223,7 @@
             <div class="page" id="p1">
                 <div class="front book-cover">
                     <div class="book-title">La Nostra Storia</div>
-                    <p>Michelle & Matteo</p>
+                    <p>Michelle & Matteo</p> 
                     <div style="font-size: 4rem; margin-top: 20px;">❤️</div>
                 </div>
                 <div class="back">
@@ -302,7 +306,7 @@
 
             <div class="page" id="p8">
                 <div class="front">
-                      <img src="img/fotoc.jpg" class="photo-frame" alt="Foto 10 Placeholder">
+                    <img src="img/fotoc.jpg" class="photo-frame" alt="Foto 10 Placeholder">
                 </div>
                 <div class="back">
                     <p class="caption">
@@ -332,6 +336,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
+        // --- NUOVA LOGICA AUDIO AGGIUNTA QUI ---
+        const audio = document.getElementById('background-music');
+        let musicStarted = false;
+
+        function playMusic() {
+            if (!musicStarted) {
+                // Imposta un volume iniziale (40%)
+                audio.volume = 0.4; 
+                // Avvia la riproduzione, gestendo l'errore se il browser la blocca (Autoplay Policy)
+                audio.play().catch(e => {
+                    console.error("Autoplay bloccato. La musica partirà solo dopo l'interazione manuale.");
+                });
+                musicStarted = true;
+            }
+        }
+        // ---------------------------------------
+
         // --- 1. LOGICA INTRO ---
         const texts = [
             document.getElementById('text1'),
@@ -367,9 +388,9 @@
             setTimeout(showNextText, 500);
         };
 
-        // --- 2. LOGICA LIBRO AGGIORNATA (Senza pulsanti) ---
+        // --- 2. LOGICA LIBRO AGGIORNATA (Ora gestisce l'audio al click) ---
         let currentPage = 1;
-        const totalPages = 9; // <--- CORRETTO: IMPOSTATO A 9 PAGINE
+        const totalPages = 9; 
 
         function flipBook(direction) {
             if (direction === 'next' && currentPage <= totalPages) { 
@@ -388,6 +409,8 @@
             page.addEventListener('click', () => {
                 const pageNum = index + 1;
                 if (pageNum === currentPage) {
+                    // Avvia la musica al primo click di flip
+                    playMusic(); 
                     flipBook('next');
                 } else if (pageNum === currentPage - 1) {
                     flipBook('prev');
@@ -455,7 +478,4 @@
         }
     </script>
 </body>
-
 </html>
-
-
