@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Per il nostro Mesiversario</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Lora:ital,wght@0,400;1,400;1,600&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Lora', serif;
+            background-color: #ffe6e6; /* Rosa tenue di base */
+        }
+
+        /* --- THREE.JS BACKGROUND --- */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- INTRO SCREEN --- */
+        #intro-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 1s ease;
+        }
+
+        .intro-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 4rem;
+            color: #ff69b4; /* Hot Pink */
+            opacity: 0;
+            position: absolute;
+            transition: opacity 1.5s ease-in-out;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* --- MAIN SCENE --- */
+        #main-scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 2s ease;
+            z-index: 10;
+            perspective: 2000px;
+        }
+
+        /* --- MAIN TITLE --- */
+        #main-title {
+            position: absolute;
+            top: 2%; /* Spostato più in alto per dare spazio */
+            width: 90%;
+            text-align: center;
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            color: #d63384; /* Deep pink */
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.7);
+            z-index: 25;
+            margin: 0;
+        }
+
+        /* --- 3D BOOK - STILE MODERNO --- */
+        .book {
+            position: relative;
+            width: 800px;
+            height: 550px;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            border-radius: 15px;
+            margin-top: 100px; /* Aggiunto margine per distanziare dal titolo */
+        }
+
+        .page {
+            position: absolute;
+            width: 400px; /* Metà del libro */
+            height: 100%;
+            top: 0;
+            right: 0;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            background: #fffcf7; /* Carta più calda */
+            border: 1px solid #e8e8e8;
+            border-radius: 0 15px 15px 0;
+            cursor: pointer;
+        }
+
+        /* Facciate della pagina */
+        .front, .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+            box-sizing: border-box;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.03);
+            border-radius: 0 15px 15px 0;
+        }
+
+        .back {
+            transform: rotateY(180deg);
+            background-color: #fbfbfb;
+            border-right: 4px double #e0e0e0;
+            border-radius: 15px 0 0 15px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.05);
+        }
+
+        /* Contenuti Libro */
+        .book-cover {
+            background: linear-gradient(160deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            color: white;
+            border: none;
+        }
+        .book-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .photo-frame {
+            width: 85%;
+            height: 65%;
+            object-fit: cover;
+            border: 6px solid white;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .caption {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #555;
+            text-align: center;
+            line-height: 1.6;
+            font-style: italic;
+            font-weight: 600;
+            max-width: 90%;
+        }
+
+        /* ORDINE Z-INDEX (Aggiornato per 9 pagine totali) */
+        #p1 { z-index: 9; }
+        #p2 { z-index: 8; }
+        #p3 { z-index: 7; }
+        #p4 { z-index: 6; }
+        #p5 { z-index: 5; }
+        #p6 { z-index: 4; }
+        #p7 { z-index: 3; }
+        #p8 { z-index: 2; }
+        #p9 { z-index: 1; }
+        
+        /* Classi per girare */
+        .flipped {
+            transform: rotateY(-180deg);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 850px) {
+            .book { 
+                width: 360px; 
+                height: 320px; 
+                margin-top: 80px; /* Meno margine su mobile */
+            }
+            .page { width: 180px; }
+            .intro-text { font-size: 2.5rem; }
+            #main-title { font-size: 1.8rem; top: 3%; }
+            .book-title { font-size: 2.2rem; }
+            .photo-frame { height: 55%; border-width: 3px; }
+            .caption { font-size: 0.9rem; margin-top: 10px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div id="intro-overlay">
+        <div class="intro-text" id="text1">Ciao amore mio</div>
+        <div class="intro-text" id="text2">Ti amo tantissimo</div>
+        <div class="intro-text" id="text3">Buon mesiversario</div>
+    </div>
+
+    <div id="main-scene">
+        
+        <h1 id="main-title">Per il nostro mesiversario, ti amo tanto Michelle.</h1>
+
+        <div class="book" id="book">
+            <div class="page" id="p1">
+                <div class="front book-cover">
+                    <div class="book-title">La Nostra Storia</div>
+                    <p>Michelle & [Tuo Nome]</p>
+                    <div style="font-size: 4rem; margin-top: 20px;">❤️</div>
+                </div>
+                <div class="back">
+                    <h3>Amore mio,</h3>
+                    <p style="padding: 15px; text-align: center; font-size: 1.1rem;">
+                        Questo libro è un piccolo viaggio attraverso i nostri momenti.<br>
+                        Ogni pagina è un ricordo che custodisco nel cuore.<br><br>
+                        Sfoglialo con amore cliccando sulle pagine.
+                    </p>
+                </div>
+            </div>
+
+            <div class="page" id="p2">
+                <div class="front">
+                    <img src="img/foto1.jpg" class="photo-frame" alt="Foto 1">
+                </div>
+                <div class="back">
+                    <p class="caption">
+                        "Tra le tue braccia è il mio posto preferito nel mondo. Mi sento al sicuro ogni volta che mi stringi."
+                    </p>
+                </div>
+            </div>
+
+            <div class="page" id="p3">
+                <div class="front">
+                    <img src="img/foto2.jpeg" class="photo-frame" alt="Foto 2">
+                </div>
+                <div class="back">
+                    <p class="caption">
+                        "Quel bacio quella sera me lo ricordo ancora, ricordo ancora quanto mi sentissi già tuo."
+                    </p>
+                </div>
+            </div>
+
+            <div class="page" id="p4">
+                <div class="front">
+                    <img src="img/foto6.jpg" class="photo-frame" alt="Foto 3">
+                </div>
+                <div class="back">
+                    <p class="caption">
+                        "Questa foto la metto sempre soltanto per ricordarti quanto tu nella semplicità mi rendi felice."
+                        
+                    </p>
+                </div>
+            </div>
+
+            <div class="page" id="p5">
+                <div class="front">
+                    <img src="img/foto3.jpg" class="photo-frame" alt="Foto 4">
+                </div>
+                <div class="back">
+                    <p class="caption">
+                        "E' stato uno dei giorni più belli della mia vita, uno di quelli che non dimenticherò mai, soltanto grazie a te."
+                    </p>
+                </div>
+            </div>
+
+             <div class="page" id="p6">
+                <div class="front">
+                    <img src="img/foto5.jpg" class="photo-frame" alt="Foto 5">
+                </div>
+                <div class="back">
+                    <p class="caption">
+                        "Io ancora non ci credevo che tu fossi lì con me, che io e te stessimo bene insieme, nello stesso posto, ero e sono la persona più fortunata al mondo."
+                    </p>
+                </div>
+            </div>
+
+            <div class="page" id="p7">
+                <div class="front">
+                    <img src="img/foto1.jpg" class="photo-frame" style="filter: grayscale(50%);" alt="Foto 6 Placeholder">
+                </div>
+                <div class="back">
+                    <p class="caption">
+                        "Anche se per te sarà stato solo un giro da primark per me è stato bellissimo divertirmi così con te, io sto bene solo quando sei con me"
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="page" id="p8">
+                <div class="front">
+                      <img src="img/fotoc.jpg" class="photo-frame" alt="Foto 10 Placeholder">
+                </div>
+                <div class="back">
+                    <p class="caption">
+                        Abbiamo passato un sacco di momenti, sia brutti ma anche bellissimi ed è nel tuo carattere, nella tua personalità che sfoggi quotidianamente che io ho trovato la persona che cercavo, quella che mi fa sentire sempre amato.
+                    </p>
+                </div>
+            </div>
+
+            <div class="page" id="p9">
+                <div class="front">
+                    <h2 style="color: #d63384; font-family: 'Dancing Script', cursive; font-size: 2.5rem;">Per sempre noi...</h2>
+                    <p>Gira l'ultima pagina ❤️</p>
+                </div>
+                <div class="back book-cover" style="justify-content: center;"> <div class="book-title" style="font-size: 2.5rem;">Ti amo infinite volte.</div>
+                    <p style="font-size: 1.2rem; margin-top: 20px;">
+                        Sei la cosa più bella che mi sia mai capitata.<br>
+                        Grazie per ogni istante passato insieme.<br><br>
+                        Buon mesiversario amore mio.
+                    </p>
+                    <div style="font-size: 5rem; margin-top: 30px;">💖</div>
+                </div>
+            </div>
+
+        </div>
+        </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- 1. LOGICA INTRO ---
+        const texts = [
+            document.getElementById('text1'),
+            document.getElementById('text2'),
+            document.getElementById('text3')
+        ];
+        const introOverlay = document.getElementById('intro-overlay');
+        const mainScene = document.getElementById('main-scene');
+
+        let currentText = 0;
+
+        function showNextText() {
+            if (currentText < texts.length) {
+                texts[currentText].style.opacity = 1;
+                setTimeout(() => {
+                    texts[currentText].style.opacity = 0;
+                    currentText++;
+                    setTimeout(showNextText, 1000);
+                }, 2000);
+            } else {
+                setTimeout(() => {
+                    introOverlay.style.opacity = 0;
+                    setTimeout(() => {
+                        introOverlay.style.display = 'none';
+                        mainScene.style.opacity = 1;
+                        initThreeJS();
+                    }, 1000);
+                }, 1000);
+            }
+        }
+
+        window.onload = () => {
+            setTimeout(showNextText, 500);
+        };
+
+        // --- 2. LOGICA LIBRO AGGIORNATA (Senza pulsanti) ---
+        let currentPage = 1;
+        const totalPages = 9; // <--- CORRETTO: IMPOSTATO A 9 PAGINE
+
+        function flipBook(direction) {
+            if (direction === 'next' && currentPage <= totalPages) { 
+                document.getElementById(`p${currentPage}`).classList.add('flipped');
+                document.getElementById(`p${currentPage}`).style.zIndex = currentPage; 
+                currentPage++;
+            } else if (direction === 'prev' && currentPage > 1) {
+                currentPage--;
+                document.getElementById(`p${currentPage}`).classList.remove('flipped');
+                document.getElementById(`p${currentPage}`).style.zIndex = totalPages - currentPage + 10;
+            }
+        }
+
+        // Event listener per il click sulle pagine
+        document.querySelectorAll('.page').forEach((page, index) => {
+            page.addEventListener('click', () => {
+                const pageNum = index + 1;
+                if (pageNum === currentPage) {
+                    flipBook('next');
+                } else if (pageNum === currentPage - 1) {
+                    flipBook('prev');
+                }
+            });
+        });
+
+        // --- 3. THREE.JS BACKGROUND ---
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 700;
+            const posArray = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 15;
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.05,
+                color: 0xff69b4,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const particlesMesh = new THREE.Points(particlesGeometry, material);
+            scene.add(particlesMesh);
+
+            camera.position.z = 5;
+
+            let mouseX = 0;
+            let mouseY = 0;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = event.clientX / window.innerWidth - 0.5;
+                mouseY = event.clientY / window.innerHeight - 0.5;
+            });
+
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const elapsedTime = clock.getElapsedTime();
+                particlesMesh.rotation.y = elapsedTime * 0.1;
+                particlesMesh.rotation.x = mouseY * 0.5;
+                particlesMesh.rotation.y += mouseX * 0.5;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+    </script>
+</body>
+</html>
